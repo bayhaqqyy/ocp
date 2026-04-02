@@ -1,4 +1,4 @@
-[bastion]
+[bastion_hosts]
 bastion ansible_host=10.0.0.5
 
 [lb]
@@ -10,35 +10,34 @@ bastion
 [http]
 bastion
 
-[bootstrap]
+[bootstrap_nodes]
 bootstrap ansible_host=10.0.0.10
 
 [masters]
-master00.ocp.example.com ansible_host=10.0.0.11
-master01.ocp.example.com ansible_host=10.0.0.12
-master02.ocp.example.com ansible_host=10.0.0.13
+master00 ansible_host=10.0.0.11
+master01 ansible_host=10.0.0.12
+master02 ansible_host=10.0.0.13
 
 [workers]
-worker00.ocp.example.com ansible_host=10.0.0.21
-worker01.ocp.example.com ansible_host=10.0.0.22
-worker02.ocp.example.com ansible_host=10.0.0.22
+worker00 ansible_host=10.0.0.21
+worker01 ansible_host=10.0.0.22
+worker02 ansible_host=10.0.0.22
 
 
 [infra]
-infra00.ocp.example.com ansible_host=10.0.0.31
-infra01.ocp.example.com ansible_host=10.0.0.32
-infra02.ocp.example.com ansible_host=10.0.0.32
+infra00 ansible_host=10.0.0.31
+infra01 ansible_host=10.0.0.32
+infra02 ansible_host=10.0.0.32
 
 
 [monitoring]
-mon00.ocp.example.com ansible_host=10.0.0.41
-mon01.ocp.example.com ansible_host=10.0.0.41
-mon02.ocp.example.com ansible_host=10.0.0.41
+mon00 ansible_host=10.0.0.41
+mon01 ansible_host=10.0.0.41
+mon02 ansible_host=10.0.0.41
 
 
 
 [logging]
-log00.ocp.example.com ansible_host=10.0.0.51
-log01.ocp.example.com ansible_host=10.0.0.51
-log02.ocp.example.com ansible_host=10.0.0.51
-
+log00 ansible_host=10.0.0.51
+log01 ansible_host=10.0.0.51
+log02 ansible_host=10.0.0.51

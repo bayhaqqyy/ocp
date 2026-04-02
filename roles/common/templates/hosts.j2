@@ -3,14 +3,14 @@
 # ========================
 # Bastion
 # ========================
-{% for host in groups['bastion'] %}
+{% for host in groups['bastion_hosts'] %}
 {{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
 {% endfor %}
 
 # ========================
 # Bootstrap
 # ========================
-{% for host in groups['bootstrap'] %}
+{% for host in groups['bootstrap_nodes'] %}
 {{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
 {% endfor %}
 
