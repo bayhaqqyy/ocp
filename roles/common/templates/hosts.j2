@@ -10,57 +10,53 @@
 # ========================
 # Bootstrap
 # ========================
-{% for host in groups['bootstrap_nodes'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
-{% endfor %}
+{{ bootstrap_node.ip }} {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }} {{ bootstrap_node.name }}
 
 # ========================
 # Masters
 # ========================
-{% for host in groups['masters'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% for node in master_nodes %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
 
 # ========================
 # Workers
 # ========================
-{% for host in groups['workers'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% for node in worker_nodes %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
 
 # ========================
 # Routers (optional)
 # ========================
-{% if groups['routers'] is defined %}
-{% for host in groups['routers'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% for node in router_nodes | default(worker_nodes) %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
-{% endif %}
 
 # ========================
 # Monitoring (optional)
 # ========================
-{% if groups['mon'] is defined %}
-{% for host in groups['mon'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% if monitoring_nodes is defined and (monitoring_nodes | length > 0) %}
+{% for node in monitoring_nodes %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
 {% endif %}
 
 # ========================
 # Storages (optional)
 # ========================
-{% if groups['storages'] is defined %}
-{% for host in groups['storages'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% if storage_nodes is defined and (storage_nodes | length > 0) %}
+{% for node in storage_nodes %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
 {% endif %}
 
 # ========================
 # Logs (optional)
 # ========================
-{% if groups['logs'] is defined %}
-{% for host in groups['logs'] %}
-{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% if logging_nodes is defined and (logging_nodes | length > 0) %}
+{% for node in logging_nodes %}
+{{ node.ip }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}
 {% endfor %}
 {% endif %}
 

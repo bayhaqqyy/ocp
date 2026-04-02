@@ -25,13 +25,9 @@ backend api_backend
     balance source
     mode tcp
     option tcp-check
-{% if groups['bootstrap_nodes'] is defined %}
-{% for host in groups['bootstrap_nodes'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:6443 check
-{% endfor %}
-{% endif %}
-{% for host in groups['masters'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:6443 check
+    server {{ bootstrap_node.name }} {{ bootstrap_node.ip }}:6443 check
+{% for node in master_nodes %}
+    server {{ node.name }} {{ node.ip }}:6443 check
 {% endfor %}
 
 # MACHINE CONFIG
@@ -42,13 +38,9 @@ frontend mcs
 backend mcs_backend
     balance source
     mode tcp
-{% if groups['bootstrap_nodes'] is defined %}
-{% for host in groups['bootstrap_nodes'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:22623 check
-{% endfor %}
-{% endif %}
-{% for host in groups['masters'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:22623 check
+    server {{ bootstrap_node.name }} {{ bootstrap_node.ip }}:22623 check
+{% for node in master_nodes %}
+    server {{ node.name }} {{ node.ip }}:22623 check
 {% endfor %}
 
 # INGRESS HTTPS
@@ -59,8 +51,8 @@ frontend ingress_https
 backend ingress_https_backend
     balance source
     mode tcp
-{% for host in groups['routers'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:443 check
+{% for node in router_nodes | default(worker_nodes) %}
+    server {{ node.name }} {{ node.ip }}:443 check
 {% endfor %}
 
 # INGRESS HTTP
@@ -71,6 +63,6 @@ frontend ingress_http
 backend ingress_http_backend
     balance source
     mode tcp
-{% for host in groups['routers'] %}
-    server {{ host }} {{ hostvars[host].ansible_host }}:80 check
+{% for node in router_nodes | default(worker_nodes) %}
+    server {{ node.name }} {{ node.ip }}:80 check
 {% endfor %}

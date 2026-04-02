@@ -12,6 +12,53 @@ api_vip: 10.253.26.193
 ingress_vip: 10.253.26.193
 
 # ========================
+# CLUSTER NODES
+# ========================
+bootstrap_node:
+  name: bootstrap
+  ip: 10.0.0.10
+
+master_nodes:
+  - name: master00
+    ip: 10.0.0.11
+  - name: master01
+    ip: 10.0.0.12
+  - name: master02
+    ip: 10.0.0.13
+
+worker_nodes:
+  - name: worker00
+    ip: 10.0.0.21
+  - name: worker01
+    ip: 10.0.0.22
+  - name: worker02
+    ip: 10.0.0.22
+
+infra_nodes:
+  - name: infra00
+    ip: 10.0.0.31
+  - name: infra01
+    ip: 10.0.0.32
+  - name: infra02
+    ip: 10.0.0.32
+
+monitoring_nodes:
+  - name: mon00
+    ip: 10.0.0.41
+  - name: mon01
+    ip: 10.0.0.41
+  - name: mon02
+    ip: 10.0.0.41
+
+logging_nodes:
+  - name: log00
+    ip: 10.0.0.51
+  - name: log01
+    ip: 10.0.0.51
+  - name: log02
+    ip: 10.0.0.51
+
+# ========================
 # DNS (dnsmasq)
 # ========================
 dns_interface: ens192
@@ -44,4 +91,3 @@ oc_client_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp
 # ========================
 pull_secret: '{"auths": {...}}'
 ssh_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ...'
-
