@@ -31,13 +31,24 @@
     src: /tmp/oc.tar.gz
     dest: /usr/local/bin/
     remote_src: yes
-- name: Ensure binaries executable
-  file:
+- name: Check extracted client binaries
+  stat:
     path: "{{ item }}"
-    mode: '0755'
+  register: oc_client_binaries
   loop:
     - /usr/local/bin/openshift-install
     - /usr/local/bin/oc
+- name: Ensure binaries executable
+  file:
+    path: "{{ item }}"
+    state: file
+    mode: '0755'
+  loop: "{{ oc_client_binaries.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
+- name: Fail if required binaries are missing
+  fail:
+    msg: "Required binary {{ item.item }} was not found after extraction."
+  when: not item.stat.exists
+  loop: "{{ oc_client_binaries.results }}"
 - name: Check openshift-install version
   command: openshift-install version
   register: install_version
