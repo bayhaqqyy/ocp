@@ -50,14 +50,21 @@
   when: not item.stat.exists
   loop: "{{ oc_client_binaries.results }}"
 - name: Check openshift-install version
-  command: openshift-install version
+  command:
+    argv:
+      - /usr/local/bin/openshift-install
+      - version
   register: install_version
 
 - debug:
     var: install_version.stdout
 
 - name: Check oc version
-  command: oc version --client
+  command:
+    argv:
+      - /usr/local/bin/oc
+      - version
+      - --client
   register: oc_version
 
 - debug:

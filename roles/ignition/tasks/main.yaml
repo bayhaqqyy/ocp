@@ -23,7 +23,7 @@
 - name: Generate installer manifests
   command:
     argv:
-      - openshift-install
+      - /usr/local/bin/openshift-install
       - create
       - manifests
       - --dir={{ ocp_dir }}
@@ -46,7 +46,7 @@
 - name: Generate ignition configs
   command:
     argv:
-      - openshift-install
+      - /usr/local/bin/openshift-install
       - create
       - ignition-configs
       - --dir={{ ocp_dir }}
@@ -67,7 +67,7 @@
 - name: Wait for bootstrap to complete
   command:
     argv:
-      - openshift-install
+      - /usr/local/bin/openshift-install
       - wait-for
       - bootstrap-complete
       - --dir={{ ocp_dir }}
@@ -78,7 +78,7 @@
 - name: Wait for cluster install to complete
   command:
     argv:
-      - openshift-install
+      - /usr/local/bin/openshift-install
       - wait-for
       - install-complete
       - --dir={{ ocp_dir }}
