@@ -1,0 +1,87 @@
+- name: Ensure installer working directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ ocp_dir }}"
+    - "{{ http_root }}"
+
+- name: Render install-config.yaml
+  template:
+    src: install-config.yaml.j2
+    dest: "{{ ocp_dir }}/install-config.yaml"
+    mode: '0600'
+
+- name: Preserve a copy of install-config.yaml
+  copy:
+    src: "{{ ocp_dir }}/install-config.yaml"
+    dest: "{{ ocp_dir }}/install-config.yaml.bak"
+    remote_src: yes
+    mode: '0600'
+
+- name: Generate installer manifests
+  command:
+    argv:
+      - openshift-install
+      - create
+      - manifests
+      - --dir={{ ocp_dir }}
+  args:
+    creates: "{{ ocp_dir }}/manifests"
+
+- name: Check if install-config.yaml still exists
+  stat:
+    path: "{{ ocp_dir }}/install-config.yaml"
+  register: install_config_stat
+
+- name: Restore install-config.yaml if the installer consumed it
+  copy:
+    src: "{{ ocp_dir }}/install-config.yaml.bak"
+    dest: "{{ ocp_dir }}/install-config.yaml"
+    remote_src: yes
+    mode: '0600'
+  when: not install_config_stat.stat.exists
+
+- name: Generate ignition configs
+  command:
+    argv:
+      - openshift-install
+      - create
+      - ignition-configs
+      - --dir={{ ocp_dir }}
+  args:
+    creates: "{{ ocp_dir }}/bootstrap.ign"
+
+- name: Publish ignition files for node boot
+  copy:
+    src: "{{ ocp_dir }}/{{ item }}"
+    dest: "{{ http_root }}/{{ item }}"
+    remote_src: yes
+    mode: '0644'
+  loop:
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+
+- name: Wait for bootstrap to complete
+  command:
+    argv:
+      - openshift-install
+      - wait-for
+      - bootstrap-complete
+      - --dir={{ ocp_dir }}
+      - --log-level=info
+  when: ocp_wait_for_bootstrap | default(false) | bool
+  changed_when: false
+
+- name: Wait for cluster install to complete
+  command:
+    argv:
+      - openshift-install
+      - wait-for
+      - install-complete
+      - --dir={{ ocp_dir }}
+      - --log-level=info
+  when: ocp_wait_for_install_complete | default(false) | bool
+  changed_when: false

@@ -1,0 +1,17 @@
+- name: Install httpd
+  package:
+    name: httpd
+    state: present
+
+- name: Change httpd port to 8080
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen'
+    line: 'Listen 8080'
+  notify: restart httpd
+
+- name: Ensure httpd started
+  service:
+    name: httpd
+    state: started
+    enabled: yes

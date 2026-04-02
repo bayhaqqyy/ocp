@@ -1,0 +1,53 @@
+- name: Install required packages
+  package:
+    name:
+      - haproxy
+      - dnsmasq
+      - httpd
+      - podman
+    state: present
+- name: Update /etc/hosts
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: '0644'
+- name: Download openshift-install
+  get_url:
+    url: "{{ openshift_install_url }}"
+    dest: /tmp/openshift-install.tar.gz
+- name: Extract openshift-install
+  unarchive:
+    src: /tmp/openshift-install.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+- name: Download oc client
+  get_url:
+    url: "{{ oc_client_url }}"
+    dest: /tmp/oc.tar.gz
+- name: Extract oc client
+  unarchive:
+    src: /tmp/oc.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+- name: Ensure binaries executable
+  file:
+    path: "{{ item }}"
+    mode: '0755'
+  loop:
+    - /usr/local/bin/openshift-install
+    - /usr/local/bin/oc
+- name: Check openshift-install version
+  command: openshift-install version
+  register: install_version
+
+- debug:
+    var: install_version.stdout
+
+- name: Check oc version
+  command: oc version --client
+  register: oc_version
+
+- debug:
+    var: oc_version.stdout

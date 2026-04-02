@@ -1,0 +1,16 @@
+- name: Install dnsmasq
+  package:
+    name: dnsmasq
+    state: present
+
+- name: Deploy dnsmasq config from template
+  template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+  notify: restart dnsmasq
+
+- name: Start dnsmasq
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes

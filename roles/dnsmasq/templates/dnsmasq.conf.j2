@@ -1,0 +1,21 @@
+### disable DHCP
+no-dhcp-interface=
+
+### DNS settings
+no-hosts
+interface={{ dns_interface }}
+addn-hosts=/etc/hosts
+
+domain={{ cluster_name }}.{{ base_domain }}
+local=/{{ cluster_name }}.{{ base_domain }}/
+
+{% for dns in upstream_dns %}
+server={{ dns }}
+{% endfor %}
+
+# API
+address=/api.{{ cluster_name }}.{{ base_domain }}/{{ api_vip }}
+address=/api-int.{{ cluster_name }}.{{ base_domain }}/{{ api_vip }}
+
+# APPS
+address=/apps.{{ cluster_name }}.{{ base_domain }}/{{ ingress_vip }}

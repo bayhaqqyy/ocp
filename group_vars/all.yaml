@@ -1,0 +1,47 @@
+# ========================
+# CLUSTER INFO
+# ========================
+cluster_name: ocp-dgt-jkt
+base_domain: pegadaian.co.id
+
+
+# ========================
+# VIP (HAProxy)
+# ========================
+api_vip: 10.253.26.193
+ingress_vip: 10.253.26.193
+
+# ========================
+# DNS (dnsmasq)
+# ========================
+dns_interface: ens192
+
+upstream_dns:
+  - 10.253.4.20
+  - 10.253.4.21
+
+# ========================
+# HTTP (ignition)
+# ========================
+http_port: 8080
+http_root: /var/www/html
+
+# ========================
+# DIRECTORY
+# ========================
+ocp_dir: /root/ocp
+yaml_dir: /root/yaml_collection
+
+# ========================
+# OPENSHIFT VERSION
+# ========================
+
+openshift_install_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-install-linux.tar.gz"
+oc_client_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-client-linux.tar.gz"
+
+# ========================
+# AUTH
+# ========================
+pull_secret: '{"auths": {...}}'
+ssh_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ...'
+

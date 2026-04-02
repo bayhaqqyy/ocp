@@ -1,0 +1,76 @@
+127.0.0.1 localhost
+
+# ========================
+# Bastion
+# ========================
+{% for host in groups['bastion'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+
+# ========================
+# Bootstrap
+# ========================
+{% for host in groups['bootstrap'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+
+# ========================
+# Masters
+# ========================
+{% for host in groups['masters'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+
+# ========================
+# Workers
+# ========================
+{% for host in groups['workers'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+
+# ========================
+# Routers (optional)
+# ========================
+{% if groups['routers'] is defined %}
+{% for host in groups['routers'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+{% endif %}
+
+# ========================
+# Monitoring (optional)
+# ========================
+{% if groups['mon'] is defined %}
+{% for host in groups['mon'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+{% endif %}
+
+# ========================
+# Storages (optional)
+# ========================
+{% if groups['storages'] is defined %}
+{% for host in groups['storages'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+{% endif %}
+
+# ========================
+# Logs (optional)
+# ========================
+{% if groups['logs'] is defined %}
+{% for host in groups['logs'] %}
+{{ hostvars[host].ansible_host }} {{ host }}.{{ cluster_name }}.{{ base_domain }} {{ host }}
+{% endfor %}
+{% endif %}
+
+# ========================
+# OCP VIP 
+# ========================
+
+# API
+{{ api_vip }} api.{{ cluster_name }}.{{ base_domain }}
+{{ api_vip }} api-int.{{ cluster_name }}.{{ base_domain }}
+
+# APPS 
+{{ ingress_vip }} apps.{{ cluster_name }}.{{ base_domain }}

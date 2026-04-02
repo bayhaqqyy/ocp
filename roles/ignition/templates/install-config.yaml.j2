@@ -1,0 +1,29 @@
+apiVersion: v1
+baseDomain: {{ base_domain }}
+
+compute:
+- hyperthreading: Enabled
+  name: worker
+
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+
+metadata:
+  name: {{ cluster_name }}
+
+networking:
+  clusterNetwork:
+  - cidr: 10.136.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 10.149.0.0/16
+
+platform:
+  none: {}
+
+fips: false
+
+pullSecret: '{{ pull_secret }}'
+sshKey: '{{ ssh_key }}'

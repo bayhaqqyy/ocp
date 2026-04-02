@@ -1,0 +1,76 @@
+global
+    log 127.0.0.1 local2
+    chroot /var/lib/haproxy
+    pidfile /var/run/haproxy.pid
+    maxconn 4000
+    user haproxy
+    group haproxy
+    daemon
+    stats socket /var/lib/haproxy/stats
+
+defaults
+    mode tcp
+    log global
+    option tcplog
+    timeout connect 10s
+    timeout client 1m
+    timeout server 1m
+
+# API SERVER
+frontend api
+    bind *:6443
+    default_backend api_backend
+
+backend api_backend
+    balance source
+    mode tcp
+    option tcp-check
+{% if groups['bootstrap'] is defined %}
+{% for host in groups['bootstrap'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:6443 check
+{% endfor %}
+{% endif %}
+{% for host in groups['masters'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:6443 check
+{% endfor %}
+
+# MACHINE CONFIG
+frontend mcs
+    bind *:22623
+    default_backend mcs_backend
+
+backend mcs_backend
+    balance source
+    mode tcp
+{% if groups['bootstrap'] is defined %}
+{% for host in groups['bootstrap'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:22623 check
+{% endfor %}
+{% endif %}
+{% for host in groups['masters'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:22623 check
+{% endfor %}
+
+# INGRESS HTTPS
+frontend ingress_https
+    bind *:443
+    default_backend ingress_https_backend
+
+backend ingress_https_backend
+    balance source
+    mode tcp
+{% for host in groups['routers'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:443 check
+{% endfor %}
+
+# INGRESS HTTP
+frontend ingress_http
+    bind *:80
+    default_backend ingress_http_backend
+
+backend ingress_http_backend
+    balance source
+    mode tcp
+{% for host in groups['routers'] %}
+    server {{ host }} {{ hostvars[host].ansible_host }}:80 check
+{% endfor %}

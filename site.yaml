@@ -1,0 +1,35 @@
+---
+- name: Prepare bastion host
+  hosts: bastion
+  become: true
+  gather_facts: true
+  roles:
+    - common
+
+- name: Configure DNS service
+  hosts: bastion
+  become: true
+  gather_facts: true
+  roles:
+    - dnsmasq
+
+- name: Configure load balancer
+  hosts: bastion
+  become: true
+  gather_facts: true
+  roles:
+    - haproxy
+
+- name: Configure web server for ignition delivery
+  hosts: bastion
+  become: true
+  gather_facts: true
+  roles:
+    - httpd
+
+- name: Generate and publish OpenShift installer artifacts
+  hosts: bastion
+  become: true
+  gather_facts: true
+  roles:
+    - ignition
