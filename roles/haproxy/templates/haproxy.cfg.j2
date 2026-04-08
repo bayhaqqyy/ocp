@@ -25,7 +25,9 @@ backend api_backend
     balance source
     mode tcp
     option tcp-check
+{% if ocp_bootstrap_active | default(true) | bool %}
     server {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }} {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }}:6443 check
+{% endif %}
 {% for node in master_nodes %}
     server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:6443 check
 {% endfor %}
@@ -38,7 +40,9 @@ frontend mcs
 backend mcs_backend
     balance source
     mode tcp
+{% if ocp_bootstrap_active | default(true) | bool %}
     server {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }} {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }}:22623 check
+{% endif %}
 {% for node in master_nodes %}
     server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:22623 check
 {% endfor %}

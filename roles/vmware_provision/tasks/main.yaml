@@ -1,0 +1,155 @@
+- name: Ensure VMware Python dependencies are present
+  package:
+    name:
+      - python3-pip
+    state: present
+
+- name: Install pyvmomi for VMware modules
+  pip:
+    name: pyvmomi
+    state: present
+
+- name: Validate VMware configuration
+  assert:
+    that:
+      - vcenter_ip is defined
+      - vcenter_username is defined
+      - vcenter_password is defined
+      - vcenter_datacenter is defined
+      - vcenter_cluster is defined
+      - vcenter_datastore is defined
+      - vcenter_network_name is defined
+      - vmware_template_name is defined
+      - vmware_network.gateway is defined
+      - vmware_network.netmask is defined
+      - vmware_network.device_name is defined
+    fail_msg: "vCenter provisioning variables are incomplete. Check group_vars/all.yaml."
+
+- name: Build list of OpenShift VMs to provision
+  set_fact:
+    vmware_ocp_nodes: []
+
+- name: Add bootstrap node to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + [bootstrap_node | combine({'role': 'bootstrap', 'ignition_file': 'bootstrap.ign'})] }}"
+  when: "'bootstrap' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+
+- name: Add master nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (master_nodes | map('combine', {'role': 'master', 'ignition_file': 'master.ign'}) | list) }}"
+  when: "'masters' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+
+- name: Add worker nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (worker_nodes | map('combine', {'role': 'worker', 'ignition_file': 'worker.ign'}) | list) }}"
+  when: "'workers' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+
+- name: Add infra nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (infra_nodes | map('combine', {'role': 'worker', 'ignition_file': 'worker.ign'}) | list) }}"
+  when:
+    - "'workers' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+    - infra_nodes is defined
+
+- name: Add monitoring nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (monitoring_nodes | map('combine', {'role': 'worker', 'ignition_file': 'worker.ign'}) | list) }}"
+  when:
+    - "'workers' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+    - monitoring_nodes is defined
+
+- name: Add logging nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (logging_nodes | map('combine', {'role': 'worker', 'ignition_file': 'worker.ign'}) | list) }}"
+  when:
+    - "'workers' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+    - logging_nodes is defined
+
+- name: Add storage nodes to provisioning list
+  set_fact:
+    vmware_ocp_nodes: "{{ vmware_ocp_nodes + (storage_nodes | map('combine', {'role': 'worker', 'ignition_file': 'worker.ign'}) | list) }}"
+  when:
+    - "'workers' in (vmware_provision_groups | default(['bootstrap', 'masters', 'workers']))"
+    - storage_nodes is defined
+
+- name: Read generated ignition files
+  slurp:
+    src: "{{ http_root }}/{{ item }}"
+  register: vmware_ignition_files
+  loop:
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+
+- name: Build ignition payload map
+  set_fact:
+    vmware_ignition_payloads: "{{ vmware_ignition_payloads | default({}) | combine({item.item: item.content}) }}"
+  loop: "{{ vmware_ignition_files.results }}"
+
+- name: Build disk list for VM
+  set_fact:
+    vmware_node_disks: >-
+      {{
+        item.disks
+        if item.disks is defined
+        else [
+          {
+            'size_gb': (item.disk_gb | default(vmware_defaults.disk_gb)),
+            'type': (item.disk_type | default(vmware_defaults.disk_type)),
+            'datastore': vcenter_datastore
+          }
+        ]
+      }}
+  loop: "{{ vmware_ocp_nodes }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: vmware_node_disks_result
+
+- name: Map node disks by VM name
+  set_fact:
+    vmware_node_disks_map: "{{ vmware_node_disks_map | default({}) | combine({item.item.name: item.ansible_facts.vmware_node_disks}) }}"
+  loop: "{{ vmware_node_disks_result.results }}"
+
+- name: Create or update OpenShift VMs in vCenter
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs | default(false) }}"
+    datacenter: "{{ vcenter_datacenter }}"
+    cluster: "{{ vcenter_cluster }}"
+    folder: "{{ vcenter_folder }}"
+    resource_pool: "{{ vcenter_resource_pool | default(omit) }}"
+    datastore: "{{ vcenter_datastore }}"
+    name: "{{ item.name }}"
+    state: "{{ vmware_vm_state | default('poweredon') }}"
+    template: "{{ vmware_template_name }}"
+    guest_id: "{{ vmware_guest_id }}"
+    annotation: "OpenShift {{ item.role }} node for {{ cluster_name }}.{{ base_domain }}"
+    hardware:
+      num_cpus: "{{ item.num_cpus | default(vmware_defaults.num_cpus) }}"
+      num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(vmware_defaults.num_cpu_cores_per_socket) }}"
+      memory_mb: "{{ item.memory_mb | default(vmware_defaults.memory_mb) }}"
+      scsi: paravirtual
+    disk: "{{ vmware_node_disks_map[item.name] }}"
+    networks:
+      - name: "{{ item.network_name | default(vcenter_network_name) }}"
+        type: static
+        device_type: vmxnet3
+        ip: "{{ item.ip }}"
+        netmask: "{{ vmware_network.netmask }}"
+        gateway: "{{ vmware_network.gateway }}"
+        dns_servers: "{{ vmware_network.dns_servers }}"
+        start_connected: true
+    advanced_settings:
+      - key: guestinfo.ignition.config.data
+        value: "{{ vmware_ignition_payloads[item.ignition_file] }}"
+      - key: guestinfo.ignition.config.data.encoding
+        value: base64
+      - key: guestinfo.afterburn.initrd.network-kargs
+        value: >-
+          ip={{ item.ip }}::{{ vmware_network.gateway }}:{{ vmware_network.netmask }}:{{ item.name }}.{{ cluster_name }}.{{ base_domain }}:{{ vmware_network.device_name }}:none
+          {% for dns_server in vmware_network.dns_servers %} nameserver={{ dns_server }}{% endfor %}
+  loop: "{{ vmware_ocp_nodes }}"
+  loop_control:
+    label: "{{ item.name }}"

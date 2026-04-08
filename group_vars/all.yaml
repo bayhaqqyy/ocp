@@ -17,46 +17,139 @@ ingress_vip: 10.253.26.193
 bootstrap_node:
   name: bootstrap
   ip: 10.0.0.10
+  num_cpus: 4
+  memory_mb: 8192
+  disk_gb: 120
 
 master_nodes:
   - name: master00
     ip: 10.0.0.11
+    num_cpus: 8
+    memory_mb: 32768
+    disk_gb: 120
   - name: master01
     ip: 10.0.0.12
+    num_cpus: 8
+    memory_mb: 32768
+    disk_gb: 120
   - name: master02
     ip: 10.0.0.13
+    num_cpus: 8
+    memory_mb: 32768
+    disk_gb: 120
 
 worker_nodes:
   - name: worker00
     ip: 10.0.0.21
+    num_cpus: 4
+    memory_mb: 16384
+    disk_gb: 120
   - name: worker01
     ip: 10.0.0.22
+    num_cpus: 4
+    memory_mb: 16384
+    disk_gb: 120
   - name: worker02
     ip: 10.0.0.22
+    num_cpus: 4
+    memory_mb: 16384
+    disk_gb: 120
 
 infra_nodes:
   - name: infra00
     ip: 10.0.0.31
+    num_cpus: 4
+    memory_mb: 12288
+    disk_gb: 120
   - name: infra01
     ip: 10.0.0.32
+    num_cpus: 4
+    memory_mb: 12288
+    disk_gb: 120
   - name: infra02
     ip: 10.0.0.32
+    num_cpus: 4
+    memory_mb: 12288
+    disk_gb: 120
 
 monitoring_nodes:
   - name: mon00
     ip: 10.0.0.41
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
+    disks:
+      - size_gb: 100
+        type: thin
+        datastore: datastore1
+      - size_gb: 200
+        type: thin
+        datastore: datastore1
   - name: mon01
     ip: 10.0.0.41
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
+    disks:
+      - size_gb: 100
+        type: thin
+        datastore: datastore1
+      - size_gb: 200
+        type: thin
+        datastore: datastore1
   - name: mon02
     ip: 10.0.0.41
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
+    disks:
+      - size_gb: 100
+        type: thin
+        datastore: datastore1
+      - size_gb: 200
+        type: thin
+        datastore: datastore1
+
+storage_nodes:
+  - name: storage00
+    ip: 10.0.0.61
+    num_cpus: 4
+    memory_mb: 8192
+    disks:
+      - size_gb: 120
+        type: thin
+        datastore: datastore1
+      - size_gb: 500
+        type: thin
+        datastore: datastore1
+  - name: storage01
+    ip: 10.0.0.62
+    num_cpus: 4
+    memory_mb: 8192
+    disks:
+      - size_gb: 120
+        type: thin
+        datastore: datastore1
+      - size_gb: 500
+        type: thin
+        datastore: datastore1
 
 logging_nodes:
   - name: log00
     ip: 10.0.0.51
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
   - name: log01
     ip: 10.0.0.51
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
   - name: log02
     ip: 10.0.0.51
+    num_cpus: 4
+    memory_mb: 8192
+    disk_gb: 100
 
 # ========================
 # DNS (dnsmasq)
@@ -82,9 +175,42 @@ yaml_dir: /root/yaml_collection
 # ========================
 # OPENSHIFT VERSION
 # ========================
-
+ocp_version: 4.16.46
 openshift_install_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-install-linux.tar.gz"
 oc_client_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-client-linux.tar.gz"
+
+# ========================
+# VMWARE / VCENTER
+# ========================
+vmware_provision_enabled: false
+vcenter_ip: 10.0.0.100
+vcenter_username: administrator@vsphere.local
+vcenter_password: changeme
+vcenter_validate_certs: false
+vcenter_datacenter: DC1
+vcenter_cluster: Cluster01
+vcenter_datastore: datastore1
+vcenter_folder: /DC1/vm/ocp-dgt-jkt
+vcenter_resource_pool: Resources
+vcenter_network_name: VM Network
+vmware_template_name: rhcos-template
+vmware_guest_id: otherGuest64
+vmware_vm_state: poweredon
+
+vmware_network:
+  gateway: 10.0.0.1
+  netmask: 255.255.255.0
+  device_name: ens192
+  dns_servers:
+    - 10.253.4.20
+    - 10.253.4.21
+
+vmware_defaults:
+  num_cpus: 4
+  num_cpu_cores_per_socket: 2
+  memory_mb: 16384
+  disk_gb: 120
+  disk_type: thin
 
 # ========================
 # AUTH

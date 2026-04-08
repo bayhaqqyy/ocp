@@ -1,0 +1,139 @@
+---
+- import_playbook: prepare.yaml
+
+- name: Provision OpenShift VMs on vCenter
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  roles:
+    - role: vmware_provision
+      when: vmware_provision_enabled | default(false) | bool
+      vars:
+        vmware_provision_groups:
+          - bootstrap
+          - masters
+
+- name: Approve control plane CSRs
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Wait for kubeconfig to appear
+      stat:
+        path: "{{ ocp_dir }}/auth/kubeconfig"
+      register: kubeconfig_stat
+      until: kubeconfig_stat.stat.exists
+      retries: 60
+      delay: 10
+      changed_when: false
+      when: vmware_provision_enabled | default(false) | bool
+
+    - name: Approve pending CSRs
+      shell: |
+        set -euo pipefail
+        export KUBECONFIG="{{ ocp_dir }}/auth/kubeconfig"
+        pending_csrs=$(/usr/local/bin/oc get csr --no-headers 2>/dev/null | awk '$5 == "Pending" { print $1 }')
+        for csr in $pending_csrs; do
+          /usr/local/bin/oc adm certificate approve "$csr"
+        done
+        remaining_csrs=$(/usr/local/bin/oc get csr --no-headers 2>/dev/null | awk '$5 == "Pending" { print $1 }')
+        test -z "$remaining_csrs"
+      args:
+        executable: /bin/bash
+      register: csr_approve
+      retries: 30
+      delay: 20
+      until: csr_approve.rc == 0
+      changed_when: csr_approve.rc == 0 and (csr_approve.stdout is search("Pending") or csr_approve.stderr is search("Pending"))
+      when: vmware_provision_enabled | default(false) | bool
+
+- name: Wait for bootstrap to complete
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Wait for bootstrap-complete
+      command:
+        argv:
+          - /usr/local/bin/openshift-install
+          - wait-for
+          - bootstrap-complete
+          - --dir={{ ocp_dir }}
+          - --log-level=info
+      changed_when: false
+      when:
+        - vmware_provision_enabled | default(false) | bool
+        - ocp_wait_for_bootstrap | default(false) | bool
+
+- name: Provision worker VMs on vCenter
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  roles:
+    - role: vmware_provision
+      when: vmware_provision_enabled | default(false) | bool
+      vars:
+        vmware_provision_groups:
+          - workers
+
+- name: Approve worker CSRs
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Wait for kubeconfig to appear
+      stat:
+        path: "{{ ocp_dir }}/auth/kubeconfig"
+      register: kubeconfig_stat
+      until: kubeconfig_stat.stat.exists
+      retries: 60
+      delay: 10
+      changed_when: false
+      when: vmware_provision_enabled | default(false) | bool
+
+    - name: Approve pending CSRs
+      shell: |
+        set -euo pipefail
+        export KUBECONFIG="{{ ocp_dir }}/auth/kubeconfig"
+        pending_csrs=$(/usr/local/bin/oc get csr --no-headers 2>/dev/null | awk '$5 == "Pending" { print $1 }')
+        for csr in $pending_csrs; do
+          /usr/local/bin/oc adm certificate approve "$csr"
+        done
+        remaining_csrs=$(/usr/local/bin/oc get csr --no-headers 2>/dev/null | awk '$5 == "Pending" { print $1 }')
+        test -z "$remaining_csrs"
+      args:
+        executable: /bin/bash
+      register: csr_approve
+      retries: 30
+      delay: 20
+      until: csr_approve.rc == 0
+      changed_when: csr_approve.rc == 0 and (csr_approve.stdout is search("Pending") or csr_approve.stderr is search("Pending"))
+      when: vmware_provision_enabled | default(false) | bool
+
+- name: Wait for install to complete
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Wait for install-complete
+      command:
+        argv:
+          - /usr/local/bin/openshift-install
+          - wait-for
+          - install-complete
+          - --dir={{ ocp_dir }}
+          - --log-level=info
+      changed_when: false
+      when:
+        - vmware_provision_enabled | default(false) | bool
+        - ocp_wait_for_install_complete | default(false) | bool
+
+- name: Remove bootstrap from HAProxy after install
+  hosts: bastion_hosts
+  become: true
+  gather_facts: true
+  roles:
+    - role: haproxy
+      vars:
+        ocp_bootstrap_active: false
+      when: vmware_provision_enabled | default(false) | bool
