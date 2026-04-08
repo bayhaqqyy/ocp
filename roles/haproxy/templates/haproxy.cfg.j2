@@ -25,9 +25,9 @@ backend api_backend
     balance source
     mode tcp
     option tcp-check
-    server {{ bootstrap_node.name }} {{ bootstrap_node.ip }}:6443 check
+    server {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }} {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }}:6443 check
 {% for node in master_nodes %}
-    server {{ node.name }} {{ node.ip }}:6443 check
+    server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:6443 check
 {% endfor %}
 
 # MACHINE CONFIG
@@ -38,9 +38,9 @@ frontend mcs
 backend mcs_backend
     balance source
     mode tcp
-    server {{ bootstrap_node.name }} {{ bootstrap_node.ip }}:22623 check
+    server {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }} {{ bootstrap_node.name }}.{{ cluster_name }}.{{ base_domain }}:22623 check
 {% for node in master_nodes %}
-    server {{ node.name }} {{ node.ip }}:22623 check
+    server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:22623 check
 {% endfor %}
 
 # INGRESS HTTPS
@@ -52,7 +52,7 @@ backend ingress_https_backend
     balance source
     mode tcp
 {% for node in router_nodes | default(worker_nodes) %}
-    server {{ node.name }} {{ node.ip }}:443 check
+    server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:443 check
 {% endfor %}
 
 # INGRESS HTTP
@@ -64,5 +64,5 @@ backend ingress_http_backend
     balance source
     mode tcp
 {% for node in router_nodes | default(worker_nodes) %}
-    server {{ node.name }} {{ node.ip }}:80 check
+    server {{ node.name }}.{{ cluster_name }}.{{ base_domain }} {{ node.name }}.{{ cluster_name }}.{{ base_domain }}:80 check
 {% endfor %}
